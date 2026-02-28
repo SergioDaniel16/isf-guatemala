@@ -35,7 +35,8 @@ public class ProyectoController {
         // Generar código automático
         String inicialOficina = oficina.getNombre().substring(0, 1).toUpperCase();
         
-        Proyecto ultimoProyecto = proyectoRepository.findTopByOficinaOrderByCodigoDesc(oficina.getId());
+        List<Proyecto> proyectos = proyectoRepository.findTopByOficinaOrderByCodigoDesc(oficina.getId());
+        Proyecto ultimoProyecto = proyectos.isEmpty() ? null : proyectos.get(0);
         int numeroSiguiente = 1;
         
         if (ultimoProyecto != null) {
@@ -107,7 +108,7 @@ public class ProyectoController {
         
         // Actualizar campos pero MANTENER el código original
         proyectoExistente.setNombre(request.getNombre());
-        proyectoExistente.setOficina(oficina);
+        //proyectoExistente.setOficina(oficina);
         proyectoExistente.setDepartamento(request.getDepartamento());
         proyectoExistente.setMunicipio(request.getMunicipio());
         proyectoExistente.setTipo(Proyecto.TipoProyecto.valueOf(request.getTipo()));

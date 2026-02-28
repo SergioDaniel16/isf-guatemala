@@ -158,6 +158,7 @@ public class ExportController {
     private void exportarVistaPorProyecto(Workbook workbook, List<ViajeIniciado> viajes, List<ViajeFinalizado> finalizados) {
         Sheet sheet = workbook.createSheet("Por Proyecto");
 
+        // Estilos
         CellStyle headerStyle = workbook.createCellStyle();
         Font headerFont = workbook.createFont();
         headerFont.setBold(true);
@@ -165,6 +166,19 @@ public class ExportController {
         headerStyle.setFont(headerFont);
         headerStyle.setFillForegroundColor(IndexedColors.BLUE.getIndex());
         headerStyle.setFillPattern(FillPatternType.SOLID_FOREGROUND);
+
+        // Estilo para números con 2 decimales (formato: 0.00)
+        CellStyle decimalStyle = workbook.createCellStyle();
+        DataFormat format = workbook.createDataFormat();
+        decimalStyle.setDataFormat(format.getFormat("0.00"));
+
+        // Estilo para moneda USD (formato: $0.00)
+        CellStyle currencyUSDStyle = workbook.createCellStyle();
+        currencyUSDStyle.setDataFormat(format.getFormat("$#,##0.00"));
+
+        // Estilo para moneda GTQ (formato: Q0.00)
+        CellStyle currencyGTQStyle = workbook.createCellStyle();
+        currencyGTQStyle.setDataFormat(format.getFormat("\"Q\"#,##0.00"));
 
         Row headerRow = sheet.createRow(0);
         String[] columns = {"Proyecto", "Vehículo", "Días Base", "Tarifa", "KM Extra", "Tarifa KM Extra", "Costo USD", "Costo GTQ"};
@@ -233,14 +247,39 @@ public class ExportController {
                 Row row = sheet.createRow(rowNum++);
                 java.util.Map<String, Object> vdata = vehiculoEntry.getValue();
                 
+                // Columna 0: Proyecto (texto)
                 row.createCell(0).setCellValue(proyecto);
+                
+                // Columna 1: Vehículo (texto)
                 row.createCell(1).setCellValue(vehiculoEntry.getKey());
+                
+                // Columna 2: Días Base (número entero)
                 row.createCell(2).setCellValue((int) vdata.get("diasBase"));
-                row.createCell(3).setCellValue((double) datos.get("tarifaBase"));
-                row.createCell(4).setCellValue((double) vdata.get("kmExtra"));
-                row.createCell(5).setCellValue((double) datos.get("tarifaKmExtra"));
-                row.createCell(6).setCellValue((double) vdata.get("costoUSD"));
-                row.createCell(7).setCellValue((double) vdata.get("costoGTQ"));
+                
+                // Columna 3: Tarifa (número decimal)
+                Cell tarifaCell = row.createCell(3);
+                tarifaCell.setCellValue((double) datos.get("tarifaBase"));
+                tarifaCell.setCellStyle(currencyUSDStyle);
+                
+                // Columna 4: KM Extra (número decimal)
+                Cell kmExtraCell = row.createCell(4);
+                kmExtraCell.setCellValue((double) vdata.get("kmExtra"));
+                kmExtraCell.setCellStyle(decimalStyle);
+                
+                // Columna 5: Tarifa KM Extra (número decimal)
+                Cell tarifaKmCell = row.createCell(5);
+                tarifaKmCell.setCellValue((double) datos.get("tarifaKmExtra"));
+                tarifaKmCell.setCellStyle(currencyUSDStyle);
+                
+                // Columna 6: Costo USD (moneda)
+                Cell costoUSDCell = row.createCell(6);
+                costoUSDCell.setCellValue((double) vdata.get("costoUSD"));
+                costoUSDCell.setCellStyle(currencyUSDStyle);
+                
+                // Columna 7: Costo GTQ (moneda)
+                Cell costoGTQCell = row.createCell(7);
+                costoGTQCell.setCellValue((double) vdata.get("costoGTQ"));
+                costoGTQCell.setCellStyle(currencyGTQStyle);
             }
         }
 
@@ -252,6 +291,7 @@ public class ExportController {
     private void exportarVistaPorVehiculo(Workbook workbook, List<ViajeIniciado> viajes, List<ViajeFinalizado> finalizados) {
         Sheet sheet = workbook.createSheet("Por Vehículo");
 
+        // Estilos
         CellStyle headerStyle = workbook.createCellStyle();
         Font headerFont = workbook.createFont();
         headerFont.setBold(true);
@@ -259,6 +299,11 @@ public class ExportController {
         headerStyle.setFont(headerFont);
         headerStyle.setFillForegroundColor(IndexedColors.BLUE.getIndex());
         headerStyle.setFillPattern(FillPatternType.SOLID_FOREGROUND);
+
+        // Estilo para números con 2 decimales
+        CellStyle decimalStyle = workbook.createCellStyle();
+        DataFormat format = workbook.createDataFormat();
+        decimalStyle.setDataFormat(format.getFormat("0.00"));
 
         Row headerRow = sheet.createRow(0);
         String[] columns = {"Vehículo", "Millaje Inicial", "Millaje Final", "Total Recorrido"};
@@ -306,10 +351,28 @@ public class ExportController {
             Row row = sheet.createRow(rowNum++);
             java.util.Map<String, Object> datos = entry.getValue();
             
+            // Columna 0: Vehículo (texto)
             row.createCell(0).setCellValue(entry.getKey());
-            row.createCell(1).setCellValue((double) datos.get("millageInicial"));
-            row.createCell(2).setCellValue((double) datos.get("millageFinal"));
-            row.createCell(3).setCellValue((double) datos.get("totalRecorrido"));
+            
+            // Columna 1: Millaje Inicial (número decimal)
+            Cell millageInicialCell = row.createCell(1);
+            double millageInicial = (double) datos.get("millageInicial");
+            if (millageInicial != Double.MAX_VALUE) {
+                millageInicialCell.setCellValue(millageInicial);
+                millageInicialCell.setCellStyle(decimalStyle);
+            } else {
+                millageInicialCell.setCellValue("N/A");
+            }
+            
+            // Columna 2: Millaje Final (número decimal)
+            Cell millageFinalCell = row.createCell(2);
+            millageFinalCell.setCellValue((double) datos.get("millageFinal"));
+            millageFinalCell.setCellStyle(decimalStyle);
+            
+            // Columna 3: Total Recorrido (número decimal)
+            Cell totalRecorridoCell = row.createCell(3);
+            totalRecorridoCell.setCellValue((double) datos.get("totalRecorrido"));
+            totalRecorridoCell.setCellStyle(decimalStyle);
         }
 
         for (int i = 0; i < columns.length; i++) {
